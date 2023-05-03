@@ -32,7 +32,7 @@ class ParseDetMir:
             if self.params['page'] > data['products']['last_page']:
                 self.next_page = False
             for product in data['products']['data']:
-                print(product['name']) #TODO После создания второго класса товары не отображаются.
+                print(product['name']) #TODO После создания второго экземпляра класса товары не отображаются.
                 yield product
 
 
