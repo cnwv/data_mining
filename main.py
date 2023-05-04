@@ -58,8 +58,8 @@ class Get_category:
 
     def run(self):
         for category in self._parse():
-            path = self.mkdir(str(category['id']))
-            category_url = 'https://ispace.ge/api/apr/catalog/products/category' + '/' + category['url']
+            path = self.mkdir(str(category['name']))
+            category_url = 'https://ispace.ge/en/api/apr/catalog/products/category' + '/' + category['url']
             print(f"Creating ParseDetMir instance for URL: {category_url}")
             category = ParseDetMir(path, category_url)
             self.categories.append(ParseDetMir(path, category_url))
