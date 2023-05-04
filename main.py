@@ -13,7 +13,6 @@ class ParseDetMir:
         'page': 1
     }
     next_page = True
-
     def __init__(self, save_path: Path, url):
         self.save_path = save_path
         self.url = url
@@ -29,7 +28,9 @@ class ParseDetMir:
             response = self._get_response()
             data = response.json()
             self.params['page'] += 1
+            print(self.params)
             if self.params['page'] > data['products']['last_page']:
+                self.params['page'] = 1
                 self.next_page = False
             for product in data['products']['data']:
                 print(product['name']) #TODO После создания второго экземпляра класса товары не отображаются.
@@ -53,6 +54,7 @@ class Get_category:
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
     }
     next_page = True
+    categories = []
 
     def run(self):
         for category in self._parse():
@@ -60,8 +62,10 @@ class Get_category:
             category_url = 'https://ispace.ge/api/apr/catalog/products/category' + '/' + category['url']
             print(f"Creating ParseDetMir instance for URL: {category_url}")
             category = ParseDetMir(path, category_url)
-            print(f"Created instance of ParseDetMir with id {id(category)}")
-            category.run()
+            self.categories.append(ParseDetMir(path, category_url))
+            print(self.categories)
+        for i in self.categories:
+            i.run()
     def _parse(self):
         response = self._get_response()
         data = response.json()
