@@ -24,6 +24,8 @@ class GBlogParse:
         if self.time + 0.1 < time.time():
             time.sleep(0.1)
         response = requests.get(url, *args, **kwargs)
+        if response.status_code == 404:
+            pass
         self.time = time.time()
         print(url)
         return response
