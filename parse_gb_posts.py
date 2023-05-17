@@ -77,30 +77,39 @@ class GBlogParse:
                         'comment': comment['comment']['body']}
                 data.append(dict)
             return data
-
+    # TODO доделать комменты
     def parse_post(self, url, soup):
         div = soup.find('div', attrs={'class': 'blog-wrap'})
         if div is not None:
-            data = {'format': 'blog', 'url': url, 'head': soup.find("h1").text}
-            date_soup = soup.find('div', attrs={'class': 'header-date'}).text
-            data['date'] = datetime.datetime.strptime(date_soup, '%d.%m.%Y')
-            author_div = list(soup.find('div', attrs={'class': 'author-box__author'}).children)
-            data['author_link'] = author_div[1]['href']
-            data['author_name'] = bs4.BeautifulSoup(str(author_div[1]), 'html.parser').text.strip()
-            self.insert_data(data, 'gb_blogs')
+            return
         else:
             author_link = soup.find('a', attrs={'class': 'posts-user-info'})
-            commentable_id = soup.find("comments")["commentable-id"]
+            id = soup.find("comments")["commentable-id"]
             comments = self.get_comments(f'https://gb.ru/api/v2/comments?commentable_type=Post&'
-                                         f'commentable_id={commentable_id}&order=desc')
-            data = {'format': 'post', 'url': url, 'head': soup.find("h1").text,
+                                         f'commentable_id={id}&order=desc')
+            data = {'id': id, 'url': url, 'title': soup.find("h1").text,
                     'date': datetime.datetime.fromisoformat(
                         soup.find('time', attrs={"class": 'text-md text-muted m-r-md'}).get('datetime')),
                     'author_name': soup.find('div', attrs={'class': 'text-lg text-dark'}).text,
                     'author_link': urljoin(self.start_url, author_link.get('href')),
                     'comments': comments
                     }
+            data1 = {'post_data': {
+                'id': id, 'title': soup.find("h1").text, 'date': datetime.datetime.fromisoformat(
+                        soup.find('time', attrs={"class": 'text-md text-muted m-r-md'}).get('datetime')), 'url': url
+            }, 'author_data': {
+                'author_id': soup.find("div", attrs={"itemprop": "author"}).parent.attrs.get("href").split("/")[-1],
+                'author_name': soup.find('div', attrs={'class': 'text-lg text-dark'}).text,
+                'author_link': urljoin(self.start_url, soup.find('a', attrs={'class': 'posts-user-info'}).get('href'))
+            },
+                'tags_data': [
+                {"name": tag.text, "url": urljoin(url, tag.attrs.get("href"))}
+                for tag in soup.find_all("a", attrs={"class": "small"})
+            ],
+                'comments_data': 'skip'
+            }
             self.insert_data(data, 'gb_posts')
+            soup.find_all("a", attrs={"class": "small"})
 
     def run(self):
         for task in self.tasks:
