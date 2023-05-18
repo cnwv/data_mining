@@ -4,21 +4,26 @@ import typing
 from urllib.parse import urljoin
 import requests
 import bs4
-from pymongo import MongoClient
+# from pymongo import MongoClient
 import datetime
+from database.database import Database
 
 
 class GBlogParse:
 
-    def __init__(self, start_url, collection):
+    def __init__(self, start_url, db):
         self.time = time.time()
         self.start_url = start_url
-        self.collection = collection
+        self.db = db
         self.done_urls = set()
         self.tasks = []
         start_task = self.get_task(self.start_url, self.parse_feed)
         self.tasks.append(start_task)
         self.done_urls.add(self.start_url)
+
+    def run(self):
+        for task in self.tasks:
+            task_result = task()
 
     def _get_response(self, url, *args, **kwargs):
         if self.time + 0.1 < time.time():
@@ -62,23 +67,28 @@ class GBlogParse:
                       )
         self.task_creator(a_links, self.parse_post)
 
-    def insert_data(self, data, type):
-        self.collection[type].insert_one(data)
+    def save(self, data):
+        self.db.add_post(data)
 
     def get_comments(self, url):
-        data = []
+        comments = []
         response = self._get_response(url).json()
-        if response == []:
-            data = 'None'
-            return data
-        else:
-            for comment in response:
-                dict = {'name': comment['comment']['user']['full_name'],
-                        'comment': comment['comment']['body']}
-                data.append(dict)
-            return data
-    # TODO доделать комменты
+        for comment in response:
+            comments.append(self.parse_comment(comment))
+        return comments
+
+    def parse_comment(self, comment):
+        author = comment.get('comment').get('user').get('full_name')
+        text = comment.get('comment').get('body')
+        include = comment.get('comment').get('children')
+        if include:
+            for child in include:
+                include = self.parse_comment(child)
+
+        return {'author': author, 'text': text, 'include': include}
+
     def parse_post(self, url, soup):
+
         div = soup.find('div', attrs={'class': 'blog-wrap'})
         if div is not None:
             return
@@ -87,37 +97,28 @@ class GBlogParse:
             id = soup.find("comments")["commentable-id"]
             comments = self.get_comments(f'https://gb.ru/api/v2/comments?commentable_type=Post&'
                                          f'commentable_id={id}&order=desc')
-            data = {'id': id, 'url': url, 'title': soup.find("h1").text,
-                    'date': datetime.datetime.fromisoformat(
-                        soup.find('time', attrs={"class": 'text-md text-muted m-r-md'}).get('datetime')),
-                    'author_name': soup.find('div', attrs={'class': 'text-lg text-dark'}).text,
-                    'author_link': urljoin(self.start_url, author_link.get('href')),
-                    'comments': comments
-                    }
-            data1 = {'post_data': {
-                'id': id, 'title': soup.find("h1").text, 'date': datetime.datetime.fromisoformat(
-                        soup.find('time', attrs={"class": 'text-md text-muted m-r-md'}).get('datetime')), 'url': url
+            data = {'post_data': {
+                'id': id,
+                'title': soup.find("h1").text,
+                # 'date': datetime.datetime.fromisoformat(soup.find('time', attrs={"class": 'text-md text-muted m-r-md'}).get('datetime')),
+                'url': url
             }, 'author_data': {
-                'author_id': soup.find("div", attrs={"itemprop": "author"}).parent.attrs.get("href").split("/")[-1],
-                'author_name': soup.find('div', attrs={'class': 'text-lg text-dark'}).text,
-                'author_link': urljoin(self.start_url, soup.find('a', attrs={'class': 'posts-user-info'}).get('href'))
+                'id': int(
+                    soup.find("div", attrs={"itemprop": "author"}).parent.attrs.get("href").split("/")[-1]),
+                'name': soup.find('div', attrs={'class': 'text-lg text-dark'}).text,
+                'url': urljoin(self.start_url, soup.find('a', attrs={'class': 'posts-user-info'}).get('href'))
             },
                 'tags_data': [
-                {"name": tag.text, "url": urljoin(url, tag.attrs.get("href"))}
-                for tag in soup.find_all("a", attrs={"class": "small"})
-            ],
-                'comments_data': 'skip'
+                    {"name": tag.text, "url": urljoin(url, tag.attrs.get("href"))}
+                    for tag in soup.find_all("a", attrs={"class": "small"})
+                ],
+                'comments_data': comments
             }
-            self.insert_data(data, 'gb_posts')
-            soup.find_all("a", attrs={"class": "small"})
-
-    def run(self):
-        for task in self.tasks:
-            task_result = task()
+            self.save(data)
 
 
 if __name__ == '__main__':
-    db = MongoClient()["gb_parse_09_20"]
+    # db = MongoClient()["gb_parse_09_20"]
+    db = Database("sqlite:///gb_blog.db")
     parser = GBlogParse("https://gb.ru/posts", db)
     parser.run()
-
