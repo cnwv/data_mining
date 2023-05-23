@@ -68,7 +68,7 @@ class GBlogParse:
         self.task_creator(a_links, self.parse_post)
 
     def save(self, data):
-        self.db.add_post(data)
+        self.db.add_data(data)
 
     def get_comments(self, url):
         comments = []
@@ -78,14 +78,14 @@ class GBlogParse:
         return comments
 
     def parse_comment(self, comment):
-        author = comment.get('comment').get('user').get('full_name')
+        commentator = comment.get('comment').get('user').get('full_name')
         text = comment.get('comment').get('body')
         include = comment.get('comment').get('children')
         if include:
             for child in include:
                 include = self.parse_comment(child)
 
-        return {'author': author, 'text': text, 'include': include}
+        return {'author': commentator, 'text': text, 'include': include}
 
     def parse_post(self, url, soup):
 
@@ -103,13 +103,13 @@ class GBlogParse:
                 # 'date': datetime.datetime.fromisoformat(soup.find('time', attrs={"class": 'text-md text-muted m-r-md'}).get('datetime')),
                 'url': url
             }, 'author_data': {
-                'id': int(
-                    soup.find("div", attrs={"itemprop": "author"}).parent.attrs.get("href").split("/")[-1]),
+                'id':
+                    soup.find("div", attrs={"itemprop": "author"}).parent.attrs.get("href").split("/")[-1],
                 'name': soup.find('div', attrs={'class': 'text-lg text-dark'}).text,
                 'url': urljoin(self.start_url, soup.find('a', attrs={'class': 'posts-user-info'}).get('href'))
             },
                 'tags_data': [
-                    {"name": tag.text, "url": urljoin(url, tag.attrs.get("href"))}
+                    {"name": tag.text}
                     for tag in soup.find_all("a", attrs={"class": "small"})
                 ],
                 'comments_data': comments

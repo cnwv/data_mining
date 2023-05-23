@@ -14,11 +14,11 @@ tag_post = Table(
 
 class Post(Base):
     __tablename__ = "post"
-    id = Column(BigInteger, primary_key=True, nullable=False, autoincrement=True)
+    id = Column(BigInteger, primary_key=True, nullable=False)
     title = Column(String(250), nullable=False, unique=False)
     url = Column(String, unique=True, nullable=False)
     author_id = Column(BigInteger, ForeignKey("author.id"))
-    author = relationship("Author")
+    author = relationship("Author", backref="posts")
     tags = relationship("Tag", secondary=tag_post, backref="posts")
 
 
@@ -32,6 +32,20 @@ class Author(Base):
 
 class Tag(Base):
     __tablename__ = "tag"
-    id = Column(BigInteger, primary_key=True, nullable=False, autoincrement=True)
-    name = Column(String, unique=True, nullable=False)
-    url = Column(String, unique=True, nullable=False)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(150), nullable=False)
+
+
+class Comment(Base):
+    __tablename__ = 'comment'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    text = Column(String, nullable=True)
+    author_id = Column(Integer, ForeignKey('user.id'))
+    author = relationship('User', backref='comments')
+    post_id = Column(Integer, ForeignKey('post.id'))
+
+
+class User(Base):
+    __tablename__ = 'user'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
