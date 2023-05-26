@@ -1,0 +1,22 @@
+version: '3'
+services:
+  parser:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./your_script.py:/app/your_script.py
+    environment:
+      - MONGO_URI=mongodb://your_mongodb_uri
+    depends_on:
+      - mongodb
+    networks:
+      - app_network
+  mongodb:
+    image: mongo
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
