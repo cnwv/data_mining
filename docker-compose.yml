@@ -5,15 +5,15 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ./your_script.py:/app/your_script.py
+      - ./main.py:/app/maim.py
     environment:
-      - MONGO_URI=mongodb://your_mongodb_uri
+      - MONGO_URI=mongodb://cnwv:Dasdas123@91.203.192.16:27017/baza
     depends_on:
       - mongodb
     networks:
       - app_network
   mongodb:
-    image: mongo
+    image: mongo:4.4
     networks:
       - app_network
 

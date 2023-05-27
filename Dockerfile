@@ -8,5 +8,5 @@ RUN pip3 install pymongo
 COPY main.py /app/
 
 # Запуск скрипта при старте контейнера
-CMD ["python3", "/app/main.py.py"]
+CMD ["python3", "/app/main.py"]
 
