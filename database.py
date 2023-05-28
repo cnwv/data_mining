@@ -3,7 +3,11 @@ from pymongo import MongoClient
 
 class Database:
     def __init__(self):
-        self.db = MongoClient()["shinyprofi_parse_26_05"]['wheels']
+        host = 'mongodb'  # или IP-адрес хоста, где запущен Docker
+        port = 27017
+        username = 'admin'
+        password = 'password'
+        self.db = MongoClient(host, port, username=username, password=password)["shinyprofi_parse_26_05"]['wheels']
 
     def insert_data(self, data):
         # проверяем есть ли в базе данные
