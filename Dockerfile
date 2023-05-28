@@ -1,7 +1,7 @@
-FROM alpine:latest
+FROM ubuntu:latest
 
 # Установка зависимостей
-RUN apk update && apk add --no-cache python3 py3-pip
+RUN apt update && apt install -y python3 python3-pip
 
 # Копирование скрипта парсинга в контейнер
 COPY . /app
