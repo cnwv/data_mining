@@ -17,19 +17,26 @@ class InstagramSpider(scrapy.Spider):
         self.tags = tags
 
     def parse(self, response):
-        yield scrapy.FormRequest(
-            self._login_url,
-            method='POST',
-            callback=self.parse,
-            formdata={
-                'username': self.login,
-                'enc_password': self.password
-            },
-            headers={
-                'X-CSRFToken': self._get_csrf_token(response)
-            }
-        )
-        response.follow(f'{self._tag_path}{self.tags}/', callback=self.tag_page_parse)
+        try:
+            csrf_data = self._get_csrf_token(response)
+            yield scrapy.FormRequest(
+                self._login_url,
+                method='POST',
+                callback=self.parse,
+                formdata={
+                    'username': self.login,
+                    'enc_password': self.password
+                },
+                headers={
+                    'X-Csrftoken': csrf_data
+                }
+            )
+        except ValueError:
+            data = response.json()
+            for tag in self.tags:
+                yield response.follow(
+                    f'{self._tag_path}{tag}/',
+                    callback=self.tag_page_parse)
 
     def tag_page_parse(self, response):
         print(1)
