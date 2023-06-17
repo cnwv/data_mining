@@ -9,10 +9,10 @@ if __name__ == '__main__':
     crawler_setting = Settings()
     crawler_setting.setmodule("avito_parse.settings")
     crawler_process = CrawlerProcess(settings=crawler_setting)
-    tags = ['offm1']
+    users = ['a.lshim']
     crawler_process.crawl(InstagramSpider,
                           login=os.getenv('INST_LOGIN'),
                           password=os.getenv('INST_PASSWD'),
-                          tags=tags
+                          users=users
                           )
     crawler_process.start()
